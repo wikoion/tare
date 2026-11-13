@@ -1,0 +1,5 @@
+// Shared build settings. Personal values (team, bundle ID) go in Local.xcconfig, which isn't committed.
+APP_BUNDLE_ID = io.github.tare.Tare
+DEVELOPMENT_TEAM =
+
+#include? "Local.xcconfig"

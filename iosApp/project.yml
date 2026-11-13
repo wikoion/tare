@@ -1,0 +1,67 @@
+name: Tare
+options:
+  bundleIdPrefix: io.github.tare
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.10"
+    CODE_SIGN_STYLE: Automatic
+    ENABLE_USER_SCRIPT_SANDBOXING: NO
+configFiles:
+  Debug: Config/Base.xcconfig
+  Release: Config/Base.xcconfig
+targets:
+  Tare:
+    type: application
+    platform: iOS
+    sources: [Tare]
+    entitlements:
+      path: Tare/Tare.entitlements
+      properties:
+        com.apple.developer.healthkit: true
+        com.apple.developer.healthkit.access: []
+    info:
+      path: Tare/Info.plist
+      properties:
+        CFBundleDisplayName: Tare
+        # Each TestFlight upload needs a new build number: scripts/testflight.sh sets CURRENT_PROJECT_VERSION.
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        UILaunchScreen:
+          UIColorName: LaunchBackground
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        # Compose Multiplatform renders at up to 120 Hz on ProMotion screens.
+        CADisableMinimumFrameDurationOnPhone: true
+        NSBluetoothAlwaysUsageDescription: Tare connects to your smart scale over Bluetooth to receive your weigh-ins.
+        NSHealthShareUsageDescription: Tare can save your weigh-ins to Apple Health if you turn that on in Settings.
+        NSHealthUpdateUsageDescription: Tare saves your weight, BMI, body fat and lean body mass to Apple Health if you turn that on in Settings.
+        # Keeps the pending scale connection alive in the background, so a weigh-in arrives
+        # even when the app isn't open.
+        UIBackgroundModes: [bluetooth-central]
+        ITSAppUsesNonExemptEncryption: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_ID)
+        # iPhone only: as a universal app, App Store Connect rejects portrait-only for breaking iPad multitasking.
+        TARGETED_DEVICE_FAMILY: "1"
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        FRAMEWORK_SEARCH_PATHS: $(SRCROOT)/../composeApp/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)
+        OTHER_LDFLAGS: [$(inherited), -framework, ComposeApp, -lsqlite3]
+    preBuildScripts:
+      - name: Build Kotlin framework
+        basedOnDependencyAnalysis: false
+        script: |
+          cd "$SRCROOT/.."
+          export JAVA_HOME="${JAVA_HOME:-/opt/homebrew/opt/openjdk@21}"
+          ./gradlew :composeApp:embedAndSignAppleFrameworkForXcode
+schemes:
+  Tare:
+    build:
+      targets:
+        Tare: all
+    run:
+      config: Debug

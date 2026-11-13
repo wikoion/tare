@@ -1,0 +1,44 @@
+-- One weigh-in. Body composition isn't stored: it's derived from weight and impedance with the
+-- current profile, so fixing a wrong height or birth date corrects every past reading.
+CREATE TABLE measurement (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    taken_at INTEGER NOT NULL,       -- Unix epoch milliseconds
+    weight_kg REAL NOT NULL,
+    impedance INTEGER,               -- 50 kHz, ohms; NULL when not measured
+    impedance_high INTEGER,          -- 500 kHz, ohms; NULL when not measured
+    source TEXT NOT NULL,            -- 'scale', 'scale_offline' or 'manual'
+    health_synced INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE INDEX measurement_taken_at ON measurement(taken_at);
+
+selectAll:
+SELECT * FROM measurement ORDER BY taken_at;
+
+selectById:
+SELECT * FROM measurement WHERE id = ?;
+
+selectBetween:
+SELECT * FROM measurement WHERE taken_at BETWEEN ? AND ? ORDER BY taken_at;
+
+selectUnsynced:
+SELECT * FROM measurement WHERE health_synced = 0 ORDER BY taken_at;
+
+insert:
+INSERT INTO measurement(taken_at, weight_kg, impedance, impedance_high, source)
+VALUES (?, ?, ?, ?, ?);
+
+lastInsertId:
+SELECT last_insert_rowid();
+
+markHealthSynced:
+UPDATE measurement SET health_synced = 1 WHERE id = ?;
+
+clearHealthSynced:
+UPDATE measurement SET health_synced = 0;
+
+deleteById:
+DELETE FROM measurement WHERE id = ?;
+
+count:
+SELECT COUNT(*) FROM measurement;
